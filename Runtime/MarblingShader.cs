@@ -36,9 +36,13 @@ namespace MarblingEffectSys {
         public void Reset(RenderTexture dst) {
             Graphics.Blit(null, dst, Mat, (int)PASS.Reset);
         }
+        public void Regression(RenderTexture dst, RenderTexture src, float regression) {
+            Mat.SetVector(P_Param0, new Vector4(regression, 0, 0, 0));
+            Graphics.Blit(src, dst, Mat, (int)PASS.REGRESSION);
+        }
 
         #region declarations
-        public enum PASS { RENDER = 0, ADD, Reset }
+        public enum PASS { RENDER = 0, ADD, Reset, REGRESSION }
         public const string PATH = "Marbling";
         public static readonly int P_OffsetTex = Shader.PropertyToID("_OffsetTex");
         public static readonly int P_BrushTex = Shader.PropertyToID("_BrushTex");

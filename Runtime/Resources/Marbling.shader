@@ -108,6 +108,26 @@ Shader "Hidden/Marbling" {
                 return float4(i.uv, 0, 1);
             }
             ENDCG
+        } 
+        // Regression
+        Pass {
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+
+            v2f vert (appdata v) {
+                float2 uv = v.uv;
+                v2f o;
+                o.vertex = UnityObjectToClipPos(v.vertex);
+                o.uv = uv;
+                o.clip = o.vertex;
+                return o;
+            }
+            float4 frag (v2f i) : SV_Target {
+                float4 cmain = tex2D(_MainTex, i.uv);
+                return lerp(cmain, float4(i.uv, 0, 1), saturate(_Param0.x));
+            }
+            ENDCG
         }
     }
 }
