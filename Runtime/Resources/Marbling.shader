@@ -3,6 +3,8 @@ Shader "Hidden/Marbling" {
         _MainTex ("Texture", 2D) = "white" {}
         _OffsetTex ("Offset", 2D) = "black" {}
         _BrushTex ("Brush", 2D) = "black" {}
+
+        _Param1 ("Param 1", Vector) = (0, 0, 1, 1)
     }
     SubShader {
         Cull Off ZWrite Off ZTest Always
@@ -22,6 +24,7 @@ Shader "Hidden/Marbling" {
             };
 
             sampler2D _MainTex;
+            float4 _MainTex_TexelSize;
             
             float4 _Param0;
             float4 _Param1;
@@ -43,8 +46,8 @@ Shader "Hidden/Marbling" {
                 return o;
             }
             float4 frag (v2f i) : SV_Target {
-                float4 coffset = tex2D(_OffsetTex, i.uv);
-                float4 csrc = tex2D(_MainTex, i.uv + coffset.xy);
+                float4 uv = tex2D(_OffsetTex, i.uv);
+                float4 csrc = tex2D(_MainTex, uv.xy);
                 return csrc;
             }
             ENDCG
@@ -59,22 +62,50 @@ Shader "Hidden/Marbling" {
             sampler2D _BrushTex;
 
             v2f vert (appdata v) {
-                float2 pos_uv = dot(_Param1, float4(v.uv.xy, 1, 1));
-                float3 pos_ndc = float3(2.0 * pos_uv - 1.0, 0);
+                float2 uv = v.uv;
+
+                float2 pos_uv = _Param1.xy + uv * _Param1.zw;
+                float4 pos_ndc = float4(2.0 * pos_uv - 1.0, 0, 1);
+                if (_ProjectionParams.x < 0) pos_ndc.y *= -1;
 
                 v2f o;
-                o.vertex = float4(pos_ndc, 1);
-                o.uv = v.uv;
+                o.vertex = pos_ndc;
+                o.uv = uv;
                 o.clip = o.vertex;
                 return o;
             }
             float4 frag (v2f i) : SV_Target {
-                float2 screen_uv = i.clip.xy / i.clip.w;
-                float2 offset_uv_add = _Param0.xy;
+                float2 screen_uv = 0.5 * (i.clip.xy / i.clip.w + 1);
+                if (_ProjectionParams.x < 0) screen_uv.y = 1 - screen_uv.y;
+
+                float2 offset_uv = _Param0.xy;
                 float4 brush = tex2D(_BrushTex, i.uv);
-                float4 offset_uv = tex2D(_MainTex, screen_uv);
-                offset_uv.xy += offset_uv_add;
-                return offset_uv;
+                offset_uv *= brush.x * brush.w;
+                
+                float2 uv = tex2D(_MainTex, screen_uv + offset_uv).xy;
+                return float4(uv, 0, 1);
+            }
+            ENDCG
+        }       
+        
+        // Reset
+        Pass {
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            
+            sampler2D _BrushTex;
+
+            v2f vert (appdata v) {
+                float2 uv = v.uv;
+                v2f o;
+                o.vertex = UnityObjectToClipPos(v.vertex);
+                o.uv = uv;
+                o.clip = o.vertex;
+                return o;
+            }
+            float4 frag (v2f i) : SV_Target {
+                return float4(i.uv, 0, 1);
             }
             ENDCG
         }

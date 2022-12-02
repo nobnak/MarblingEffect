@@ -27,14 +27,18 @@ namespace MarblingEffectSys {
         public void Add(RenderTexture dst, Texture src, Texture brush, float4 rect_uv, float2 offset_uv) {
             var prev = RenderTexture.active;
             RenderTexture.active = dst;
+            Mat.SetTexture(P_BrushTex, brush);
             Mat.SetVector(P_Param0, new float4(offset_uv, 0f, 0f));
             Mat.SetVector(P_Param1, rect_uv);
             Graphics.Blit(src, dst, Mat, (int)PASS.ADD);
             RenderTexture.active = prev;
         }
+        public void Reset(RenderTexture dst) {
+            Graphics.Blit(null, dst, Mat, (int)PASS.Reset);
+        }
 
         #region declarations
-        public enum PASS { RENDER = 0, ADD }
+        public enum PASS { RENDER = 0, ADD, Reset }
         public const string PATH = "Marbling";
         public static readonly int P_OffsetTex = Shader.PropertyToID("_OffsetTex");
         public static readonly int P_BrushTex = Shader.PropertyToID("_BrushTex");
