@@ -10,6 +10,7 @@ namespace MarblingEffectSys {
     public class MarblingUVBase : MonoBehaviour {
 
         public Events events = new Events();
+        public Settings settings = new Settings();
 
         protected MarblingShader shader;
         protected Queue<Stroke> strokes;
@@ -63,7 +64,7 @@ namespace MarblingEffectSys {
             var tex = new RenderTexture(s.x, s.y, 0, RenderTextureFormat.ARGBFloat);
             tex.hideFlags = HideFlags.DontSave;
             tex.filterMode = FilterMode.Bilinear;
-            tex.wrapMode = TextureWrapMode.Clamp;
+            tex.wrapMode = settings.wrapMode;
             tex.useMipMap = false;
             tex.Create();
             shader.Reset(tex);
@@ -113,6 +114,10 @@ namespace MarblingEffectSys {
             public override string ToString() {
                 return $"<{GetType().Name}: v=({offset.x:e2},{offset.y:e2}) rect={rect}>";
             }
+        }
+        [System.Serializable]
+        public class Settings {
+            public TextureWrapMode wrapMode = TextureWrapMode.Clamp;
         }
         [System.Serializable]
         public class Tuner {
